@@ -215,9 +215,23 @@ with tab2:
             fig_indiv.update_layout(
                 title=f"Evolución Temporal para {estudiante_sel}",
                 xaxis=dict(title="Fecha y Hora"),
-                yaxis=dict(title="BPM (Pulsaciones por minuto)", titlefont=dict(color="#e74c3c"), tickfont=dict(color="#e74c3c")),
-                yaxis2=dict(title="SpO₂ (%)", titlefont=dict(color="#2980b9"), tickfont=dict(color="#2980b9"), overlaying="y", side="right"),
-                hovermode="x unified"
+                yaxis=dict(
+    title=dict(
+        text="BPM (Pulsaciones por minuto)",
+        font=dict(color="#e74c3c")
+    ),
+    tickfont=dict(color="#e74c3c")
+),
+
+yaxis2=dict(
+    title=dict(
+        text="SpO₂ (%)",
+        font=dict(color="#2980b9")
+    ),
+    tickfont=dict(color="#2980b9"),
+    overlaying="y",
+    side="right"
+),
             )
             st.plotly_chart(fig_indiv, use_container_width=True)
 
