@@ -4,7 +4,7 @@ import plotly.express as px
 import plotly.graph_objects as go
 
 # -----------------------------------------------------------------------------
-# 1. CONFIGURACIÓN DE LA PÁGINA Y ESTILOS EN TONALIDADES AZULES
+# 1. CONFIGURACIÓN DE LA PÁGINA Y ESTILOS EN FONDO/CONTENEDORES AZULES
 # -----------------------------------------------------------------------------
 st.set_page_config(
     page_title="Dashboard Tótem IoT - EAFIT",
@@ -13,20 +13,20 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Inyección de CSS personalizado para estética azul corporativa y limpia
+# CSS personalizado para aplicar tonos azules sutiles en fondos y contenedores
 st.markdown("""
     <style>
-    /* Estilos generales y de la barra lateral */
-    .sidebar .sidebar-content {
-        background-color: #f0f4f8;
+    /* Fondo general de la barra lateral */
+    section[data-testid="stSidebar"] {
+        background-color: #f4f8fc;
     }
     /* Estilo para contenedores de métricas */
     div[data-testid="metric-container"] {
-        background-color: #f7fafc;
-        border: 1px solid #e2e8f0;
+        background-color: #ebf3fc;
+        border: 1px solid #d0e1fd;
         padding: 15px;
         border-radius: 8px;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        box-shadow: 0 1px 3px rgba(0,0,0,0.03);
     }
     /* Títulos principales */
     h1, h2, h3 {
@@ -60,23 +60,25 @@ except Exception as e:
     st.stop()
 
 # -----------------------------------------------------------------------------
-# 3. FILTROS EN BARRA LATERAL (CON MANEJO DE IMAGEN Y ESTÉTICA AZUL)
+# 3. BARRA LATERAL: IMAGEN GRANDE PRIMERO Y FILTROS DEBAJO
 # -----------------------------------------------------------------------------
-st.sidebar.title("🎛️ Filtros de Control")
 
-# Manejo seguro de la imagen del "Osito médico de EAFIT" o fallback visual con estilo
+# Imagen del osito mucho más grande y sin subtítulo de texto
 try:
-    st.sidebar.image("Osito médico de EAFIT.png", width=180, caption="Osito Médico EAFIT")
+    st.sidebar.image("Osito médico de EAFIT.png", use_container_width=True)
 except Exception:
-    # Contenedor estético alternativo en tonos azules si la imagen no se encuentra localmente
+    # Contenedor alternativo grande si no encuentra la imagen local
     st.sidebar.markdown("""
-        <div style="background-color: #e6f0fa; padding: 12px; border-radius: 8px; text-align: center; border: 1px dashed #b3d1ff; margin-bottom: 15px;">
-            <span style="font-size: 28px;">🧸🩺</span><br>
-            <b style="color: #003366; font-size: 13px;">Tótem IoT - EAFIT</b>
+        <div style="background-color: #dbeafe; padding: 30px; border-radius: 12px; text-align: center; border: 2px dashed #93c5fd; margin-bottom: 15px;">
+            <span style="font-size: 55px;">🧸🩺</span><br>
+            <b style="color: #1e3a8a; font-size: 16px;">Tótem IoT - EAFIT</b>
         </div>
     """, unsafe_allow_html=True)
 
 st.sidebar.markdown("---")
+
+# Título de filtros ubicado debajo de la imagen
+st.sidebar.markdown("### 🎛️ Filtros de Control")
 
 # Filtro por rango de fechas
 min_fecha = df_raw["fecha"].min()
@@ -150,8 +152,7 @@ with tab1:
             df_daily, x="fecha", y="conteo", 
             title="Evolución del Número de Mediciones por Día",
             labels={"fecha": "Fecha", "conteo": "Cantidad de Mediciones"},
-            markers=True,
-            color_discrete_sequence=["#1f77b4"]
+            markers=True
         )
         st.plotly_chart(fig_daily, use_container_width=True)
 
@@ -162,7 +163,7 @@ with tab1:
             df_status, names="Estado", values="Cantidad",
             title="Distribución de Calidad de Mediciones (Válidas vs Inválidas)",
             color="Estado",
-            color_discrete_map={"valid": "#2b6cb0", "invalid": "#bee3f8"}
+            color_discrete_map={"valid": "#2ecc71", "invalid": "#e74c3c"}
         )
         st.plotly_chart(fig_status, use_container_width=True)
 
@@ -173,7 +174,7 @@ with tab1:
             df_validas, x="heart_rate_bpm", nbins=30,
             title="Distribución de Frecuencia Cardíaca (BPM) - Registros Válidos",
             labels={"heart_rate_bpm": "BPM"},
-            color_discrete_sequence=["#2b6cb0"]
+            color_discrete_sequence=["#3498db"]
         )
         st.plotly_chart(fig_bpm, use_container_width=True)
 
@@ -182,7 +183,7 @@ with tab1:
             df_validas, x="spo2_percent", nbins=30,
             title="Distribución de Saturación de Oxígeno (SpO₂) - Registros Válidos",
             labels={"spo2_percent": "SpO₂ (%)"},
-            color_discrete_sequence=["#3182ce"]
+            color_discrete_sequence=["#9b59b6"]
         )
         st.plotly_chart(fig_spo2, use_container_width=True)
 
@@ -192,7 +193,7 @@ with tab1:
         df_hora, x="hora", y="conteo",
         title="Horarios de Mayor Utilización del Tótem (Hora Local Colombia)",
         labels={"hora": "Hora del Día (0-23)", "conteo": "Número de Mediciones"},
-        color="conteo", color_continuous_scale="Blues"
+        color="conteo", color_continuous_scale="Viridis"
     )
     st.plotly_chart(fig_hora, use_container_width=True)
 
@@ -231,24 +232,24 @@ with tab2:
 
             fig_indiv.add_trace(go.Scatter(
                 x=df_est_valid["timestamp_colombia"], y=df_est_valid["heart_rate_bpm"],
-                mode="lines+markers", name="BPM", line=dict(color="#1a365d")
+                mode="lines+markers", name="BPM", line=dict(color="#e74c3c")
             ))
 
             fig_indiv.add_trace(go.Scatter(
                 x=df_est_valid["timestamp_colombia"], y=df_est_valid["spo2_percent"],
-                mode="lines+markers", name="SpO₂ (%)", line=dict(color="#3182ce"), yaxis="y2"
+                mode="lines+markers", name="SpO₂ (%)", line=dict(color="#2980b9"), yaxis="y2"
             ))
 
             fig_indiv.update_layout(
                 title=f"Evolución Temporal para {estudiante_sel}",
                 xaxis=dict(title="Fecha y Hora"),
                 yaxis=dict(
-                    title=dict(text="BPM (Pulsaciones por minuto)", font=dict(color="#1a365d")),
-                    tickfont=dict(color="#1a365d")
+                    title=dict(text="BPM (Pulsaciones por minuto)", font=dict(color="#e74c3c")),
+                    tickfont=dict(color="#e74c3c")
                 ),
                 yaxis2=dict(
-                    title=dict(text="SpO₂ (%)", font=dict(color="#3182ce")),
-                    tickfont=dict(color="#3182ce"),
+                    title=dict(text="SpO₂ (%)", font=dict(color="#2980b9")),
+                    tickfont=dict(color="#2980b9"),
                     overlaying="y",
                     side="right"
                 ),
