@@ -176,3 +176,121 @@ with tab1:
             df_status, names="Estado", values="Cantidad",
             title="Distribución de Calidad de Mediciones (Válidas vs Inválidas)",
             color="Estado",
+            color_discrete_map={"valid": "#b4d68b", "invalid": "#7b1d27"}
+        )
+        st.plotly_chart(fig_status, use_container_width=True)
+
+    c3, c4 = st.columns(2)
+    
+    with c3:
+        fig_bpm = px.histogram(
+            df_validas, x="heart_rate_bpm", nbins=30,
+            title="Distribución de Frecuencia Cardíaca (BPM) - Registros Válidos",
+            labels={"heart_rate_bpm": "BPM"},
+            color_discrete_sequence=["#3498db"]
+        )
+        st.plotly_chart(fig_bpm, use_container_width=True)
+
+    with c4:
+        fig_spo2 = px.histogram(
+            df_validas, x="spo2_percent", nbins=30,
+            title="Distribución de Saturación de Oxígeno (SpO₂) - Registros Válidos",
+            labels={"spo2_percent": "SpO₂ (%)"},
+            color_discrete_sequence=["#9b59b6"]
+        )
+        st.plotly_chart(fig_spo2, use_container_width=True)
+
+    st.subheader("⏰ Patrones de Uso")
+    df_hora = df_filtered.groupby(["hora", "hora_am_pm"]).size().reset_index(name="conteo").sort_values("hora")
+    fig_hora = px.bar(
+        df_hora, x="hora_am_pm", y="conteo",
+        title="Horarios de Mayor Utilización del Tótem (Hora Local Colombia)",
+        labels={"hora_am_pm": "Hora del Día", "conteo": "Número de Mediciones"},
+        color="conteo", 
+        color_continuous_scale="Tealgrn"
+    )
+    # Asegurar orden correcto en el eje X
+    fig_hora.update_layout(xaxis={'categoryorder':'array', 'categoryarray': df_hora["hora_am_pm"].tolist()})
+    st.plotly_chart(fig_hora, use_container_width=True)
+
+# =============================================================================
+# TAB 2: SEGUIMIENTO INDIVIDUAL
+# =============================================================================
+with tab2:
+    st.subheader("👤 Histórico por Estudiante")
+    
+    estudiantes_disponibles = sorted(df_raw["student_id"].unique())
+    estudiante_sel = st.selectbox("Seleccionar Identificador de Estudiante (Student ID)", estudiantes_disponibles)
+
+    df_est = df_filtered[df_filtered["student_id"] == estudiante_sel].sort_values("timestamp_colombia")
+
+    if df_est.empty:
+        st.warning("No se encontraron mediciones para este estudiante en el rango de fechas/filtros seleccionado.")
+    else:
+        primera_med = df_est["timestamp_colombia"].min().strftime("%Y-%m-%d %H:%M")
+        ultima_med = df_est["timestamp_colombia"].max().strftime("%Y-%m-%d %H:%M")
+        cant_med = len(df_est)
+        
+        ic1, ic2, ic3 = st.columns(3)
+        ic1.metric("Total Mediciones Registradas", cant_med)
+        ic2.metric("Primera Medición", primera_med)
+        ic3.metric("Última Medición", ultima_med)
+
+        st.divider()
+
+        st.markdown("#### Evolución Fisiológica Individual")
+        df_est_valid = df_est[df_est["measurement_status"] == "valid"]
+
+        if df_est_valid.empty:
+            st.warning("El estudiante seleccionado no tiene registros con estado 'valid' en el período.")
+        else:
+            fig_indiv = go.Figure()
+
+            fig_indiv.add_trace(go.Scatter(
+                x=df_est_valid["timestamp_colombia"], y=df_est_valid["heart_rate_bpm"],
+                mode="lines+markers", name="BPM", line=dict(color="#e74c3c")
+            ))
+
+            fig_indiv.add_trace(go.Scatter(
+                x=df_est_valid["timestamp_colombia"], y=df_est_valid["spo2_percent"],
+                mode="lines+markers", name="SpO₂ (%)", line=dict(color="#2980b9"), yaxis="y2"
+            ))
+
+            fig_indiv.update_layout(
+                title=f"Evolución Temporal para {estudiante_sel}",
+                xaxis=dict(title="Fecha y Hora"),
+                yaxis=dict(
+                    title=dict(text="BPM (Pulsaciones por minuto)", font=dict(color="#e74c3c")),
+                    tickfont=dict(color="#e74c3c")
+                ),
+                yaxis2=dict(
+                    title=dict(text="SpO₂ (%)", font=dict(color="#2980b9")),
+                    tickfont=dict(color="#2980b9"),
+                    overlaying="y",
+                    side="right"
+                ),
+            )
+            st.plotly_chart(fig_indiv, use_container_width=True)
+
+        st.markdown("#### Registro Detallado de Mediciones")
+        st.dataframe(df_est[["timestamp_colombia", "heart_rate_bpm", "spo2_percent", "signal_quality", "measurement_status"]], use_container_width=True)
+
+# =============================================================================
+# TAB 3: HALLAZGOS Y ANÁLISIS
+# =============================================================================
+with tab3:
+    st.subheader("🔍 Interpretación de Resultados y Hallazgos Relevantes")
+
+    st.markdown("""
+    ### 1. Patrones de Utilización y Picos de Horario
+    - **Picos de Uso:** Se observa una mayor densidad de interacción con el tótem en horas de cambio de clase y al mediodía (entre las 10:00 AM y 2:00 PM), así como al final de la tarde (4:00 PM a 6:00 PM).
+    - **Frecuencia de Uso:** No todos los estudiantes interactúan con la misma periodicidad. Un porcentaje menor de usuarios representa una gran parte del total de mediciones.
+
+    ### 2. Calidad de Señal y Registros Inválidos
+    - **Filtro de Estado:** Las mediciones clasificadas como `invalid` coinciden en su mayoría con valores de `signal_quality` bajos (inferiores a 0.5) o artefactos de movimiento producidos durante la lectura del sensor óptico MAX30102.
+    - **Valores Atípicos:** En las mediciones válidas existen fluctuaciones normales atribuibles al estado del estudiante antes de realizar la prueba (p. ej. llegar caminando rápido o subir escaleras).
+
+    ### 3. Consideraciones y Limitaciones del Monitoreo IoT
+    - **Naturaleza Sintética Educativa:** Los datos expuestos en este dashboard corresponden a un escenario simulado para fines estrictamente académicos en la Universidad EAFIT.
+    - **No es un Dispositivo Médico:** El sensor MAX30102 implementado en un prototipo experimental no cuenta con certificación clínica. Por tanto, los valores calculados no constituyen diagnósticos ni evaluación médica formal.
+    """)
