@@ -189,6 +189,8 @@ with tab1:
             labels={"heart_rate_bpm": "BPM"},
             color_discrete_sequence=["#3498db"]
         )
+        # Añade líneas divisorias blancas para separar cada barra y evitar efecto mancha
+        fig_bpm.update_traces(marker_line_color='white', marker_line_width=1.2)
         st.plotly_chart(fig_bpm, use_container_width=True)
 
     with c4:
@@ -198,6 +200,8 @@ with tab1:
             labels={"spo2_percent": "SpO₂ (%)"},
             color_discrete_sequence=["#9b59b6"]
         )
+        # Añade líneas divisorias blancas para separar cada barra y evitar efecto mancha
+        fig_spo2.update_traces(marker_line_color='white', marker_line_width=1.2)
         st.plotly_chart(fig_spo2, use_container_width=True)
 
     st.subheader("⏰ Patrones de Uso")
@@ -209,7 +213,8 @@ with tab1:
         color="conteo", 
         color_continuous_scale="Tealgrn"
     )
-    # Asegurar orden correcto en el eje X
+    # Añade líneas divisorias blancas en las barras de horario
+    fig_hora.update_traces(marker_line_color='white', marker_line_width=1.2)
     fig_hora.update_layout(xaxis={'categoryorder':'array', 'categoryarray': df_hora["hora_am_pm"].tolist()})
     st.plotly_chart(fig_hora, use_container_width=True)
 
