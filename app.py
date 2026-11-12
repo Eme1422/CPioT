@@ -4,7 +4,7 @@ import plotly.express as px
 import plotly.graph_objects as go
 
 # -----------------------------------------------------------------------------
-# 1. CONFIGURACIÓN DE LA PÁGINA
+# 1. CONFIGURACIÓN DE LA PÁGINA Y ESTILOS EN TONALIDADES AZULES
 # -----------------------------------------------------------------------------
 st.set_page_config(
     page_title="Dashboard Tótem IoT - EAFIT",
@@ -12,6 +12,28 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="expanded"
 )
+
+# Inyección de CSS personalizado para estética azul corporativa y limpia
+st.markdown("""
+    <style>
+    /* Estilos generales y de la barra lateral */
+    .sidebar .sidebar-content {
+        background-color: #f0f4f8;
+    }
+    /* Estilo para contenedores de métricas */
+    div[data-testid="metric-container"] {
+        background-color: #f7fafc;
+        border: 1px solid #e2e8f0;
+        padding: 15px;
+        border-radius: 8px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
+    /* Títulos principales */
+    h1, h2, h3 {
+        color: #003366 !important;
+    }
+    </style>
+""", unsafe_allow_html=True)
 
 # -----------------------------------------------------------------------------
 # 2. CARGA Y PREPROCESAMIENTO DE DATOS
@@ -38,10 +60,23 @@ except Exception as e:
     st.stop()
 
 # -----------------------------------------------------------------------------
-# 3. FILTROS EN BARRA LATERAL
+# 3. FILTROS EN BARRA LATERAL (CON MANEJO DE IMAGEN Y ESTÉTICA AZUL)
 # -----------------------------------------------------------------------------
-st.sidebar.image("https://www.eafit.edu.co/imagen-institucional/logo-eafit.png", width=200) # Opcional
 st.sidebar.title("🎛️ Filtros de Control")
+
+# Manejo seguro de la imagen del "Osito médico de EAFIT" o fallback visual con estilo
+try:
+    st.sidebar.image("Osito médico de EAFIT.png", width=180, caption="Osito Médico EAFIT")
+except Exception:
+    # Contenedor estético alternativo en tonos azules si la imagen no se encuentra localmente
+    st.sidebar.markdown("""
+        <div style="background-color: #e6f0fa; padding: 12px; border-radius: 8px; text-align: center; border: 1px dashed #b3d1ff; margin-bottom: 15px;">
+            <span style="font-size: 28px;">🧸🩺</span><br>
+            <b style="color: #003366; font-size: 13px;">Tótem IoT - EAFIT</b>
+        </div>
+    """, unsafe_allow_html=True)
+
+st.sidebar.markdown("---")
 
 # Filtro por rango de fechas
 min_fecha = df_raw["fecha"].min()
@@ -84,7 +119,6 @@ tab1, tab2, tab3 = st.tabs(["📊 Vista General y KPIs", "👤 Seguimiento Indiv
 # TAB 1: VISTA GENERAL Y KPIS
 # =============================================================================
 with tab1:
-    # Indicadores Generales (KPIs)
     st.subheader("📌 Indicadores Clave")
     
     total_mediciones = len(df_filtered)
@@ -106,10 +140,8 @@ with tab1:
 
     st.divider()
 
-    # Visualizaciones
     st.subheader("📈 Visualizaciones Interactivas")
     
-    # Fila 1: Evolución Temporal y Calidad
     c1, c2 = st.columns(2)
     
     with c1:
@@ -118,7 +150,8 @@ with tab1:
             df_daily, x="fecha", y="conteo", 
             title="Evolución del Número de Mediciones por Día",
             labels={"fecha": "Fecha", "conteo": "Cantidad de Mediciones"},
-            markers=True
+            markers=True,
+            color_discrete_sequence=["#1f77b4"]
         )
         st.plotly_chart(fig_daily, use_container_width=True)
 
@@ -129,11 +162,10 @@ with tab1:
             df_status, names="Estado", values="Cantidad",
             title="Distribución de Calidad de Mediciones (Válidas vs Inválidas)",
             color="Estado",
-            color_discrete_map={"valid": "#2ecc71", "invalid": "#e74c3c"}
+            color_discrete_map={"valid": "#2b6cb0", "invalid": "#bee3f8"}
         )
         st.plotly_chart(fig_status, use_container_width=True)
 
-    # Fila 2: Distribuciones de BPM y SpO2 (Solo Válidas)
     c3, c4 = st.columns(2)
     
     with c3:
@@ -141,7 +173,7 @@ with tab1:
             df_validas, x="heart_rate_bpm", nbins=30,
             title="Distribución de Frecuencia Cardíaca (BPM) - Registros Válidos",
             labels={"heart_rate_bpm": "BPM"},
-            color_discrete_sequence=["#3498db"]
+            color_discrete_sequence=["#2b6cb0"]
         )
         st.plotly_chart(fig_bpm, use_container_width=True)
 
@@ -150,18 +182,17 @@ with tab1:
             df_validas, x="spo2_percent", nbins=30,
             title="Distribución de Saturación de Oxígeno (SpO₂) - Registros Válidos",
             labels={"spo2_percent": "SpO₂ (%)"},
-            color_discrete_sequence=["#9b59b6"]
+            color_discrete_sequence=["#3182ce"]
         )
         st.plotly_chart(fig_spo2, use_container_width=True)
 
-    # Fila 3: Horarios de Utilización
     st.subheader("⏰ Patrones de Uso")
     df_hora = df_filtered.groupby("hora").size().reset_index(name="conteo")
     fig_hora = px.bar(
         df_hora, x="hora", y="conteo",
         title="Horarios de Mayor Utilización del Tótem (Hora Local Colombia)",
         labels={"hora": "Hora del Día (0-23)", "conteo": "Número de Mediciones"},
-        color="conteo", color_continuous_scale="Viridis"
+        color="conteo", color_continuous_scale="Blues"
     )
     st.plotly_chart(fig_hora, use_container_width=True)
 
@@ -179,7 +210,6 @@ with tab2:
     if df_est.empty:
         st.warning("No se encontraron mediciones para este estudiante en el rango de fechas/filtros seleccionado.")
     else:
-        # Métricas individuales
         primera_med = df_est["timestamp_colombia"].min().strftime("%Y-%m-%d %H:%M")
         ultima_med = df_est["timestamp_colombia"].max().strftime("%Y-%m-%d %H:%M")
         cant_med = len(df_est)
@@ -191,7 +221,6 @@ with tab2:
 
         st.divider()
 
-        # Gráfico evolutivo de BPM y SpO2
         st.markdown("#### Evolución Fisiológica Individual")
         df_est_valid = df_est[df_est["measurement_status"] == "valid"]
 
@@ -200,42 +229,32 @@ with tab2:
         else:
             fig_indiv = go.Figure()
 
-            # Serie BPM
             fig_indiv.add_trace(go.Scatter(
                 x=df_est_valid["timestamp_colombia"], y=df_est_valid["heart_rate_bpm"],
-                mode="lines+markers", name="BPM", line=dict(color="#e74c3c")
+                mode="lines+markers", name="BPM", line=dict(color="#1a365d")
             ))
 
-            # Serie SpO2
             fig_indiv.add_trace(go.Scatter(
                 x=df_est_valid["timestamp_colombia"], y=df_est_valid["spo2_percent"],
-                mode="lines+markers", name="SpO₂ (%)", line=dict(color="#2980b9"), yaxis="y2"
+                mode="lines+markers", name="SpO₂ (%)", line=dict(color="#3182ce"), yaxis="y2"
             ))
 
             fig_indiv.update_layout(
                 title=f"Evolución Temporal para {estudiante_sel}",
                 xaxis=dict(title="Fecha y Hora"),
                 yaxis=dict(
-    title=dict(
-        text="BPM (Pulsaciones por minuto)",
-        font=dict(color="#e74c3c")
-    ),
-    tickfont=dict(color="#e74c3c")
-),
-
-yaxis2=dict(
-    title=dict(
-        text="SpO₂ (%)",
-        font=dict(color="#2980b9")
-    ),
-    tickfont=dict(color="#2980b9"),
-    overlaying="y",
-    side="right"
-),
+                    title=dict(text="BPM (Pulsaciones por minuto)", font=dict(color="#1a365d")),
+                    tickfont=dict(color="#1a365d")
+                ),
+                yaxis2=dict(
+                    title=dict(text="SpO₂ (%)", font=dict(color="#3182ce")),
+                    tickfont=dict(color="#3182ce"),
+                    overlaying="y",
+                    side="right"
+                ),
             )
             st.plotly_chart(fig_indiv, use_container_width=True)
 
-        # Tabla detallada del estudiante
         st.markdown("#### Registro Detallado de Mediciones")
         st.dataframe(df_est[["timestamp_colombia", "heart_rate_bpm", "spo2_percent", "signal_quality", "measurement_status"]], use_container_width=True)
 
