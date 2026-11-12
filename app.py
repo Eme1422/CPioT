@@ -82,14 +82,13 @@ try:
 except Exception:
     st.sidebar.markdown("""
         <div style="background-color: #dbeafe; padding: 30px; border-radius: 12px; text-align: center; border: 2px dashed #93c5fd; margin-bottom: 15px;">
-            <span style="font-size: 55px;">🧸🩺</span><br>
             <b style="color: #1e3a8a; font-size: 16px;">Tótem IoT - EAFIT</b>
         </div>
     """, unsafe_allow_html=True)
 
 st.sidebar.markdown("---")
 
-# Título de filtros ubicado debajo de la imagen
+# Título de filtros ubicado debajo de la imagen (conservando únicamente este emoji)
 st.sidebar.markdown("### 🎛️ Filtros de Control")
 
 # Filtro por rango de fechas
@@ -117,7 +116,7 @@ if estado_sel != "Todos":
 # -----------------------------------------------------------------------------
 # 4. ENCABEZADO PRINCIPAL
 # -----------------------------------------------------------------------------
-st.title("🩺 Monitoreo Fisiológico - Tótem IoT EAFIT")
+st.title("Monitoreo Fisiológico - Tótem IoT EAFIT")
 st.markdown("""
 Esta aplicación permite analizar los datos simulados de frecuencia cardíaca (BPM) y saturación de oxígeno ($SpO_2$) 
 recolectados por el tótem interactivo IoT ubicado en el campus de la Universidad EAFIT.
@@ -127,13 +126,13 @@ st.divider()
 # -----------------------------------------------------------------------------
 # 5. PESTAÑAS PRINCIPALES DEL DASHBOARD
 # -----------------------------------------------------------------------------
-tab1, tab2, tab3 = st.tabs(["📊 Vista General y KPIs", "👤 Seguimiento Individual", "🔍 Hallazgos y Análisis"])
+tab1, tab2, tab3 = st.tabs(["Vista General y KPIs", "Seguimiento Individual", "Hallazgos y Análisis"])
 
 # =============================================================================
 # TAB 1: VISTA GENERAL Y KPIS
 # =============================================================================
 with tab1:
-    st.subheader("📌 Indicadores Clave")
+    st.subheader("Indicadores Clave")
     
     total_mediciones = len(df_filtered)
     total_estudiantes = df_filtered["student_id"].nunique()
@@ -154,7 +153,7 @@ with tab1:
 
     st.divider()
 
-    st.subheader("📈 Visualizaciones Interactivas")
+    st.subheader("Visualizaciones Interactivas")
     
     c1, c2 = st.columns(2)
     
@@ -204,7 +203,7 @@ with tab1:
         fig_spo2.update_traces(marker_line_color='white', marker_line_width=1.2)
         st.plotly_chart(fig_spo2, use_container_width=True)
 
-    st.subheader("⏰ Patrones de Uso")
+    st.subheader("Patrones de Uso")
     df_hora = df_filtered.groupby(["hora", "hora_am_pm"]).size().reset_index(name="conteo").sort_values("hora")
     fig_hora = px.bar(
         df_hora, x="hora_am_pm", y="conteo",
@@ -222,7 +221,7 @@ with tab1:
 # TAB 2: SEGUIMIENTO INDIVIDUAL
 # =============================================================================
 with tab2:
-    st.subheader("👤 Histórico por Estudiante")
+    st.subheader("Histórico por Estudiante")
     
     estudiantes_disponibles = sorted(df_raw["student_id"].unique())
     estudiante_sel = st.selectbox("Seleccionar Identificador de Estudiante (Student ID)", estudiantes_disponibles)
@@ -284,7 +283,7 @@ with tab2:
 # TAB 3: HALLAZGOS Y ANÁLISIS
 # =============================================================================
 with tab3:
-    st.subheader("🔍 Interpretación de Resultados y Hallazgos Relevantes")
+    st.subheader("Interpretación de Resultados y Hallazgos Relevantes")
 
     st.markdown("""
     ### 1. Patrones de Utilización y Picos de Horario
