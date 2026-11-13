@@ -3,9 +3,9 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 
-# -----------------------------------------------------------------------------
-# 1. CONFIGURACIÓN DE LA PÁGINA Y ESTILOS EN FONDO/CONTENEDORES AZULES
-# -----------------------------------------------------------------------------
+### -----------------------------------------------------------------------------
+### 1. CONFIGURACIÓN DE LA PÁGINA Y ESTILOS EN FONDO/CONTENEDORES AZULES
+### -----------------------------------------------------------------------------
 st.set_page_config(
     page_title="Dashboard Tótem IoT - EAFIT",
     page_icon="🩺",
@@ -13,31 +13,31 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# CSS personalizado para aplicar tonos azules sutiles en fondos y contenedores
+### CSS personalizado para aplicar tonos azules sutiles en fondos y contenedores
 st.markdown("""
-    <style>
-    /* Fondo general de la barra lateral */
-    section[data-testid="stSidebar"] {
-        background-color: #f4f8fc;
-    }
-    /* Estilo para contenedores de métricas */
-    div[data-testid="metric-container"] {
-        background-color: #ebf3fc;
-        border: 1px solid #d0e1fd;
-        padding: 15px;
-        border-radius: 8px;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.03);
-    }
-    /* Títulos principales */
-    h1, h2, h3 {
-        color: #003366 !important;
-    }
-    </style>
+<style>
+/* Fondo general de la barra lateral */
+section[data-testid="stSidebar"] {
+    background-color: #f4f8fc;
+}
+/* Estilo para contenedores de métricas */
+div[data-testid="metric-container"] {
+    background-color: #ebf3fc;
+    border: 1px solid #d0e1fd;
+    padding: 15px;
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+}
+/* Títulos principales */
+h1, h2, h3 {
+    color: #003366 !important;
+}
+</style>
 """, unsafe_allow_html=True)
 
-# -----------------------------------------------------------------------------
-# 2. CARGA Y PREPROCESAMIENTO DE DATOS
-# -----------------------------------------------------------------------------
+### -----------------------------------------------------------------------------
+### 2. CARGA Y PREPROCESAMIENTO DE DATOS
+### -----------------------------------------------------------------------------
 @st.cache_data
 def load_data():
     df = pd.read_csv("proyecto_integrador_eafit_max30102.csv")
@@ -45,12 +45,12 @@ def load_data():
     # Convertir a datetime en UTC y luego a zona horaria de Colombia
     df["timestamp"] = pd.to_datetime(df["timestamp"], utc=True)
     df["timestamp_colombia"] = df["timestamp"].dt.tz_convert("America/Bogota")
-    
+
     # Extraer variables temporales
     df["fecha"] = df["timestamp_colombia"].dt.date
     df["hora"] = df["timestamp_colombia"].dt.hour
     df["dia_semana"] = df["timestamp_colombia"].dt.day_name()
-    
+
     # Función para formatear hora en AM/PM
     def format_hour(h):
         if h == 0:
@@ -63,7 +63,6 @@ def load_data():
             return f"{h - 12} PM"
             
     df["hora_am_pm"] = df["hora"].apply(format_hour)
-    
     return df
 
 try:
@@ -72,29 +71,24 @@ except Exception as e:
     st.error(f"Error al cargar el archivo de datos: {e}")
     st.stop()
 
-# -----------------------------------------------------------------------------
-# 3. BARRA LATERAL: IMAGEN GRANDE PRIMERO Y FILTROS DEBAJO
-# -----------------------------------------------------------------------------
-
-# Imagen del osito grande sin subtítulo de texto
+### -----------------------------------------------------------------------------
+### 3. BARRA LATERAL: IMAGEN GRANDE PRIMERO Y FILTROS DEBAJO
+### -----------------------------------------------------------------------------
 try:
     st.sidebar.image("Osito médico de EAFIT.png", use_container_width=True)
 except Exception:
     st.sidebar.markdown("""
-        <div style="background-color: #dbeafe; padding: 30px; border-radius: 12px; text-align: center; border: 2px dashed #93c5fd; margin-bottom: 15px;">
-            <b style="color: #1e3a8a; font-size: 16px;">Tótem IoT - EAFIT</b>
-        </div>
+    <div style="background-color: #dbeafe; padding: 30px; border-radius: 12px; text-align: center; border: 2px dashed #93c5fd; margin-bottom: 15px;">
+        <b style="color: #1e3a8a; font-size: 16px;">Tótem IoT - EAFIT</b>
+    </div>
     """, unsafe_allow_html=True)
 
 st.sidebar.markdown("---")
-
-# Título de filtros ubicado debajo de la imagen (conservando únicamente este emoji)
 st.sidebar.markdown("### 🎛️ Filtros de Control")
 
 # Filtro por rango de fechas
 min_fecha = df_raw["fecha"].min()
 max_fecha = df_raw["fecha"].max()
-
 fecha_inicio, fecha_fin = st.sidebar.date_input(
     "Seleccionar Rango de Fechas",
     value=(min_fecha, max_fecha),
@@ -109,38 +103,36 @@ estado_sel = st.sidebar.selectbox("Estado de la Medición", estados)
 # Aplicación de Filtros Globales
 df_filtered = df_raw.copy()
 df_filtered = df_filtered[(df_filtered["fecha"] >= fecha_inicio) & (df_filtered["fecha"] <= fecha_fin)]
-
 if estado_sel != "Todos":
     df_filtered = df_filtered[df_filtered["measurement_status"] == estado_sel]
 
-# -----------------------------------------------------------------------------
-# 4. ENCABEZADO PRINCIPAL
-# -----------------------------------------------------------------------------
+### -----------------------------------------------------------------------------
+### 4. ENCABEZADO PRINCIPAL
+### -----------------------------------------------------------------------------
 st.title("Monitoreo Fisiológico - Tótem IoT EAFIT")
 st.markdown("""
-Esta aplicación permite analizar los datos simulados de frecuencia cardíaca (BPM) y saturación de oxígeno ($SpO_2$) 
-recolectados por el tótem interactivo IoT ubicado en el campus de la Universidad EAFIT.
+Esta aplicación permite analizar los datos simulados de frecuencia cardíaca (BPM) y saturación de oxígeno ($SpO_2$) recolectados por el tótem interactivo IoT ubicado en el campus de la Universidad EAFIT.
 """)
 st.divider()
 
-# -----------------------------------------------------------------------------
-# 5. PESTAÑAS PRINCIPALES DEL DASHBOARD
-# -----------------------------------------------------------------------------
+### -----------------------------------------------------------------------------
+### 5. PESTAÑAS PRINCIPALES DEL DASHBOARD
+### -----------------------------------------------------------------------------
 tab1, tab2, tab3 = st.tabs(["Vista General y KPIs", "Seguimiento Individual", "Hallazgos y Análisis"])
 
-# =============================================================================
-# TAB 1: VISTA GENERAL Y KPIS
-# =============================================================================
+### =============================================================================
+### TAB 1: VISTA GENERAL Y KPIS
+### =============================================================================
 with tab1:
     st.subheader("Indicadores Clave")
     
     total_mediciones = len(df_filtered)
     total_estudiantes = df_filtered["student_id"].nunique()
-    
+
     df_validas = df_filtered[df_filtered["measurement_status"] == "valid"]
     bpm_prom = df_validas["heart_rate_bpm"].mean() if not df_validas.empty else 0
     spo2_prom = df_validas["spo2_percent"].mean() if not df_validas.empty else 0
-    
+
     invalidas_cnt = len(df_filtered[df_filtered["measurement_status"] == "invalid"])
     pct_invalidas = (invalidas_cnt / total_mediciones * 100) if total_mediciones > 0 else 0
 
@@ -152,11 +144,9 @@ with tab1:
     col5.metric("Mediciones Inválidas", f"{invalidas_cnt}", f"{pct_invalidas:.1f}%")
 
     st.divider()
-
     st.subheader("Visualizaciones Interactivas")
-    
+
     c1, c2 = st.columns(2)
-    
     with c1:
         df_daily = df_filtered.groupby("fecha").size().reset_index(name="conteo")
         fig_daily = px.line(
@@ -170,7 +160,6 @@ with tab1:
     with c2:
         df_status = df_filtered["measurement_status"].value_counts().reset_index()
         df_status.columns = ["Estado", "Cantidad"]
-        # Colores personalizados: verde claro y rojo oscuro según la referencia proporcionada
         fig_status = px.pie(
             df_status, names="Estado", values="Cantidad",
             title="Distribución de Calidad de Mediciones (Válidas vs Inválidas)",
@@ -180,7 +169,6 @@ with tab1:
         st.plotly_chart(fig_status, use_container_width=True)
 
     c3, c4 = st.columns(2)
-    
     with c3:
         fig_bpm = px.histogram(
             df_validas, x="heart_rate_bpm", nbins=30,
@@ -188,7 +176,6 @@ with tab1:
             labels={"heart_rate_bpm": "BPM"},
             color_discrete_sequence=["#3498db"]
         )
-        # Añade líneas divisorias blancas para separar cada barra y evitar efecto mancha
         fig_bpm.update_traces(marker_line_color='white', marker_line_width=1.2)
         st.plotly_chart(fig_bpm, use_container_width=True)
 
@@ -199,7 +186,6 @@ with tab1:
             labels={"spo2_percent": "SpO₂ (%)"},
             color_discrete_sequence=["#9b59b6"]
         )
-        # Añade líneas divisorias blancas para separar cada barra y evitar efecto mancha
         fig_spo2.update_traces(marker_line_color='white', marker_line_width=1.2)
         st.plotly_chart(fig_spo2, use_container_width=True)
 
@@ -212,17 +198,15 @@ with tab1:
         color="conteo", 
         color_continuous_scale="Tealgrn"
     )
-    # Añade líneas divisorias blancas en las barras de horario
     fig_hora.update_traces(marker_line_color='white', marker_line_width=1.2)
     fig_hora.update_layout(xaxis={'categoryorder':'array', 'categoryarray': df_hora["hora_am_pm"].tolist()})
     st.plotly_chart(fig_hora, use_container_width=True)
 
-# =============================================================================
-# TAB 2: SEGUIMIENTO INDIVIDUAL
-# =============================================================================
+### =============================================================================
+### TAB 2: SEGUIMIENTO INDIVIDUAL
+### =============================================================================
 with tab2:
     st.subheader("Histórico por Estudiante")
-    
     estudiantes_disponibles = sorted(df_raw["student_id"].unique())
     estudiante_sel = st.selectbox("Seleccionar Identificador de Estudiante (Student ID)", estudiantes_disponibles)
 
@@ -241,7 +225,6 @@ with tab2:
         ic3.metric("Última Medición", ultima_med)
 
         st.divider()
-
         st.markdown("#### Evolución Fisiológica Individual")
         df_est_valid = df_est[df_est["measurement_status"] == "valid"]
 
@@ -249,17 +232,14 @@ with tab2:
             st.warning("El estudiante seleccionado no tiene registros con estado 'valid' en el período.")
         else:
             fig_indiv = go.Figure()
-
             fig_indiv.add_trace(go.Scatter(
                 x=df_est_valid["timestamp_colombia"], y=df_est_valid["heart_rate_bpm"],
                 mode="lines+markers", name="BPM", line=dict(color="#e74c3c")
             ))
-
             fig_indiv.add_trace(go.Scatter(
                 x=df_est_valid["timestamp_colombia"], y=df_est_valid["spo2_percent"],
                 mode="lines+markers", name="SpO₂ (%)", line=dict(color="#2980b9"), yaxis="y2"
             ))
-
             fig_indiv.update_layout(
                 title=f"Evolución Temporal para {estudiante_sel}",
                 xaxis=dict(title="Fecha y Hora"),
@@ -279,22 +259,28 @@ with tab2:
         st.markdown("#### Registro Detallado de Mediciones")
         st.dataframe(df_est[["timestamp_colombia", "heart_rate_bpm", "spo2_percent", "signal_quality", "measurement_status"]], use_container_width=True)
 
-# =============================================================================
-# TAB 3: HALLAZGOS Y ANÁLISIS
-# =============================================================================
+### =============================================================================
+### TAB 3: HALLAZGOS Y ANÁLISIS
+### =============================================================================
 with tab3:
-    st.subheader("Interpretación de Resultados y Hallazgos Relevantes")
-
+    st.subheader("Hallazgos Relevantes y Análisis de Datos (Tótem IoT EAFIT)")
     st.markdown("""
-    ### 1. Patrones de Utilización y Picos de Horario
-    - **Picos de Uso:** Se observa una mayor densidad de interacción con el tótem en horas de cambio de clase y al mediodía (entre las 10:00 AM y 2:00 PM), así como al final de la tarde (4:00 PM a 6:00 PM).
-    - **Frecuencia de Uso:** No todos los estudiantes interactúan con la misma periodicidad. Un porcentaje menor de usuarios representa una gran parte del total de mediciones.
+    *Este análisis se tuvo en cuenta considerando el rango de fechas de 2026/09/29 a 2026/10/28.*
 
-    ### 2. Calidad de Señal y Registros Inválidos
-    - **Filtro de Estado:** Las mediciones clasificadas como `invalid` coinciden en su mayoría con valores de `signal_quality` bajos (inferiores a 0.5) o artefactos de movimiento producidos durante la lectura del sensor óptico MAX30102.
-    - **Valores Atípicos:** En las mediciones válidas existen fluctuaciones normales atribuibles al estado del estudiante antes de realizar la prueba (p. ej. llegar caminando rápido o subir escaleras).
+    ### 1. Volumen de Participación y Patrones Horarios de Uso
+    * **Alcance poblacional:** El sistema registró un total de **2,667 mediciones** distribuidas entre **295 estudiantes únicos**, lo que evidencia una adopción constante y repetitiva del tótem dentro de la comunidad universitaria.   
+    * **Franjas horarias pico:** El análisis por hora muestra una alta actividad durante todo el día, con picos significativos de utilización en bloques clave como las **7:00 AM, 9:00 AM, 10:00 AM, 1:00 PM, 3:00 PM, 4:00 PM, 5:00 PM** y un máximo destacado a las **8:00 PM** siendo un total de **203 mediciones**, lo que indica que los estudiantes utilizan el dispositivo tanto en jornadas diurnas como nocturnas. En contraparte, el momento en el que menos hay mediciones es a las **9:00 PM** con un total de tan solo **3 mediciones** a lo largo del tiempo registrado.
 
-    ### 3. Consideraciones y Limitaciones del Monitoreo IoT
-    - **Naturaleza Sintética Educativa:** Los datos expuestos en este dashboard corresponden a un escenario simulado para fines estrictamente académicos en la Universidad EAFIT.
-    - **No es un Dispositivo Médico:** El sensor MAX30102 implementado en un prototipo experimental no cuenta con certificación clínica. Por tanto, los valores calculados no constituyen diagnósticos ni evaluación médica formal.
+    ### 2. Fiabilidad y Calidad de las Mediciones
+    * **Alta tasa de éxito:** El **97.1%** de los registros totales fueron catalogados como **válidos**, frente a un reducido **2.9%** (77 mediciones) clasificados como **inválidos**.   
+    * **Estabilidad del sensor:** Esta baja proporción de errores demuestra que el sensor óptico MAX30102 operó bajo condiciones estables de lectura, con un mínimo impacto de artefactos por movimiento o mala sujeción del dedo por parte de los usuarios.   
+
+    ### 3. Comportamiento de las Variables Fisiológicas (BPM y $\text{SpO}_2$)
+    * **Frecuencia Cardíaca (BPM):** Los registros válidos muestran una media de **75.5 bpm**, con una distribución normal centrada mayoritariamente en el rango de 60 a 90 bpm, valores esperados para población joven.
+    * **Saturación de Oxígeno ($\text{SpO}_2$):** Presenta un promedio elevado de **97.7%**, concentrándose de manera homogénea entre el **97% y el 99%**, lo que refleja niveles óptimos de oxigenación en las lecturas recolectadas.   
+
+    ### 4. Limitaciones Metodológicas y Éticas del Sistema                              
+    * **Naturaleza no clínica y restricciones del hardware:** El sensor MAX30102 implementado en este prototipo educativo no cuenta con certificación clínica. Las mediciones de frecuencia cardíaca y saturación de oxígeno no constituyen por sí solas un diagnóstico médico, ya que factores externos como la actividad física reciente al desplazarse por el campus, la temperatura ambiental o el estrés alteran sustancialmente la señal óptica.
+    * **Sesgo de autoselección poblacional:** La muestra analizada no proviene de un tamizaje epidemiológico aleatorio, sino de la participación voluntaria y espontánea de los estudiantes que transitan cerca del tótem, lo que puede sobre-representar a ciertos perfiles de usuarios.
+    * **Factores ambientales y de usabilidad:** La precisión de las lecturas puede verse afectada indirectamente por la correcta colocación del dedo por parte del usuario, la iluminación ambiental del espacio o la fatiga del propio dispositivo IoT, limitando una interpretación profunda del bienestar poblacional general.
     """)
